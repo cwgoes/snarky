@@ -40,6 +40,8 @@ module type Inputs_intf = sig
     type t [@@deriving sexp, bin_io, eq, compare]
 
     include Stringable.S with type t := t
+
+  val unpack : t -> bool list
   end
 
   module Curve : sig

@@ -81,7 +81,10 @@ let cmd =
     flag "padded-length" (optional int) ~doc:"Length in bits to pad input to"
   and params = flag "params" (optional string) ~doc:"Path to params file"
   and binary = flag "binary" no_arg ~doc:"Pass input as a string of 0s and 1s"
-  and str = anon ("INPUT" %: string) in
+  and str1 = anon ("INPUT" %: string)
+  and str2 = anon ("INPUT" %: string)
+  
+in
   fun () ->
     let module Inputs = (val curve_module curve) in
     let open Inputs in
@@ -93,15 +96,14 @@ let cmd =
       |> P.Params.load
     in
     let s, bit_length =
-      if binary then (parse_as_binary str, String.length str)
-      else (Fold.string_bits str, 8 * String.length str)
+      if binary then (parse_as_binary str1, String.length str1)
+      else (Fold.of_list (Field.unpack (Field.of_string str1) @ Field.unpack(Field.of_string str2)), 8 * String.length str1)
     in
     let padded =
       match padded_length with
       | None ->
           s
       | Some padded_length ->
-          assert (padded_length >= String.length str) ;
           Fold.(s +> init (padded_length - bit_length) ~f:(fun _ -> false))
     in
     P.digest_fold (P.State.create params) Fold.(group3 ~default:false padded)
